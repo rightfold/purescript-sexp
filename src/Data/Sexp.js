@@ -1,5 +1,5 @@
 'use strict';
 
-exports._replaceDoubleQuotes = function(s) {
-  return s.replace(/"/g, '\\"');
+exports._escape = function(s) {
+  return s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 };

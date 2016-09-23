@@ -16,10 +16,10 @@
     "purescript-sets": "^1.0.0",
     "purescript-tuples": "^1.0.0",
     "purescript-foldable-traversable": "^1.0.0",
-    "purescript-console": "^1.0.0",
     "purescript-integers": "^1.1.0",
     "purescript-eulalie": "^3.0.0",
-    "purescript-control": "^1.0.0"
+    "purescript-control": "^1.0.0",
+    "purescript-quickcheck": "^1.0.0"
   },
   "repository": {
     "type": "git",

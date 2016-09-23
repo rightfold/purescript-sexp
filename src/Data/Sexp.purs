@@ -1,4 +1,11 @@
 -- | S-expressions.
+-- |
+-- | The textual representations is simple. The following rules apply:
+-- |
+-- | - Whitespace is ignored outside atoms, and matches **only** `[ \t\r\n]+`.
+-- | - Only backslashes and double quotes can be escaped inside atoms; anything
+-- |   else must appear verbatim. Newlines and any other character are allowed
+-- |   inside atoms.
 module Data.Sexp
 ( Sexp(..)
 , toString, fromString
@@ -30,6 +37,8 @@ import Data.StrMap as StrMap
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Prelude
+import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
+import Test.QuickCheck.Gen as Gen
 
 -- | S-expression.
 data Sexp = Atom String | List (List Sexp)
@@ -38,13 +47,19 @@ derive instance eqSexp :: Eq Sexp
 derive instance ordSexp :: Ord Sexp
 derive instance genericSexp :: Generic Sexp
 
+instance arbitrarySexp :: Arbitrary Sexp where
+  arbitrary = Gen.sized arbitrary'
+    where
+    arbitrary' 0 = Atom <$> arbitrary
+    arbitrary' n = List <$> Gen.listOf (n / 2) (arbitrary' (n / 2))
+
 -- | Compute the textual representation of an S-expression.
 toString :: Sexp -> String
-toString (Atom s)  = "\"" <> _replaceDoubleQuotes s <> "\""
+toString (Atom s)  = "\"" <> _escape s <> "\""
 toString (List Nil) = "()"
 toString (List (x : xs)) = "(" <> toString x <> foldMap (\e -> " " <> toString e) xs <> ")"
 
-foreign import _replaceDoubleQuotes :: String -> String
+foreign import _escape :: String -> String
 
 -- | Parse the textual representation of an S-expression.
 fromString :: String -> Maybe Sexp
