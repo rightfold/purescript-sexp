@@ -3,6 +3,7 @@ module Data.Sexp
 ( Sexp
 , toString
 , class ToSexp, toSexp
+, class FromSexp, fromSexp
 , gToSexp
 ) where
 
@@ -97,6 +98,21 @@ instance toSexpGenericSpine :: ToSexp GenericSpine where
   toSexp (SNumber n)  = List (Atom "SNumber"  : Atom (show n) : Nil)
   toSexp (SRecord r)  = List (Atom "SRecord"  : List.fromFoldable (r >>= \{recLabel, recValue} -> [Atom recLabel, toSexp (recValue unit)]))
   toSexp (SProd c xs) = List (Atom "SProd"    : Atom c : List.fromFoldable (map (\thk -> toSexp (thk unit)) xs))
+
+class FromSexp a where
+  fromSexp :: Sexp -> Maybe a
+
+instance fromSexpVoid :: FromSexp Void where
+  fromSexp _ = Nothing
+
+instance fromSexpUnit :: FromSexp Unit where
+  fromSexp (List Nil) = Just unit
+  fromSexp _ = Nothing
+
+instance fromSexpBoolean :: FromSexp Boolean where
+  fromSexp (Atom "true")  = Just true
+  fromSexp (Atom "false") = Just false
+  fromSexp _ = Nothing
 
 -- | Convert anything to an S-expression.
 gToSexp :: forall a. (Generic a) => a -> Sexp
