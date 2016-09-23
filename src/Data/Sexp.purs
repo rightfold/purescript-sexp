@@ -1,13 +1,19 @@
 -- | S-expressions.
 module Data.Sexp
 ( Sexp(..)
-, toString
+, toString, fromString
 , class ToSexp, toSexp
 , class FromSexp, fromSexp
 , gToSexp, gFromSexp
 ) where
 
+import Control.Alt ((<|>))
 import Data.Either (Either(..))
+import Data.Eulalie.Char as EC
+import Data.Eulalie.Parser as EP
+import Data.Eulalie.Result as ER
+import Data.Eulalie.Stream as ES
+import Data.Eulalie.String as ES
 import Data.Foldable (foldMap)
 import Data.Generic (fromSpine, class Generic, GenericSpine(..), toSpine)
 import Data.Int as Int
@@ -32,10 +38,29 @@ derive instance eqSexp :: Eq Sexp
 derive instance ordSexp :: Ord Sexp
 derive instance genericSexp :: Generic Sexp
 
+-- | Compute the textual representation of an S-expression.
 toString :: Sexp -> String
-toString (Atom s)  = show s
+toString (Atom s)  = "\"" <> _replaceDoubleQuotes s <> "\""
 toString (List Nil) = "()"
 toString (List (x : xs)) = "(" <> toString x <> foldMap (\e -> " " <> toString e) xs <> ")"
+
+foreign import _replaceDoubleQuotes :: String -> String
+
+-- | Parse the textual representation of an S-expression.
+fromString :: String -> Maybe Sexp
+fromString text =
+  case EP.parse (parser unit <* EP.eof) (ES.stream (String.toCharArray text)) of
+    ER.Error _ -> Nothing
+    ER.Success {value} -> Just value
+  where
+  parser _ = EP.many space *> (atom <|> list) <* EP.many space
+  space = EC.oneOf " \t\r\n"
+  atom = Atom <$> ES.quotedString
+  list = do
+    EC.char '('
+    xs <- EP.many (parser unit)
+    EC.char ')'
+    pure $ List xs
 
 -- | Things that can be converted into S-expressions.
 class ToSexp a where
