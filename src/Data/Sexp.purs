@@ -30,7 +30,7 @@ instance toSexpUnit :: ToSexp Unit where
   toSexp _ = List Nil
 
 instance toSexpBoolean :: ToSexp Boolean where
-  toSexp true = Atom "true"
+  toSexp true  = Atom "true"
   toSexp false = Atom "false"
 
 instance toSexpInt :: ToSexp Int where
