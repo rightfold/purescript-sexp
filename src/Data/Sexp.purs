@@ -9,8 +9,15 @@ import Data.Either (Either(..))
 import Data.Generic (class Generic, GenericSpine(..), toSpine)
 import Data.List ((:), List(..))
 import Data.List as List
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Set (Set)
+import Data.Set as Set
 import Data.String as String
+import Data.StrMap (StrMap)
+import Data.StrMap as StrMap
+import Data.Tuple (Tuple(..))
 import Prelude
 
 -- | S-expression.
@@ -52,9 +59,21 @@ instance toSexpMaybe :: (ToSexp a) => ToSexp (Maybe a) where
   toSexp (Just x) = List (Atom "Just"    : toSexp x : Nil)
   toSexp Nothing  = List (Atom "Nothing" : Nil)
 
+instance toSexpTuple :: (ToSexp a, ToSexp b) => ToSexp (Tuple a b) where
+  toSexp (Tuple a b) = List (toSexp a : toSexp b : Nil)
+
 instance toSexpEither :: (ToSexp a, ToSexp b) => ToSexp (Either a b) where
   toSexp (Left x)  = List (Atom "Left"  : toSexp x : Nil)
   toSexp (Right x) = List (Atom "Right" : toSexp x : Nil)
+
+instance toSexpSet :: (ToSexp a) => ToSexp (Set a) where
+  toSexp xs = List (map toSexp (Set.toUnfoldable xs))
+
+instance toSexpMap :: (ToSexp k, ToSexp v) => ToSexp (Map k v) where
+  toSexp xs = List (Map.toList xs >>= \(Tuple k v) -> toSexp k : toSexp v : Nil)
+
+instance toSexpStrMap :: (ToSexp v) => ToSexp (StrMap v) where
+  toSexp xs = List (StrMap.toList xs >>= \(Tuple k v) -> Atom k : toSexp v : Nil)
 
 instance toSexpGenericSpine :: ToSexp GenericSpine where
   toSexp SUnit        = List (Atom "SUnit"    : Nil)
