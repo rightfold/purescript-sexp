@@ -21,6 +21,28 @@ derive instance genericSexp :: Generic Sexp
 class ToSexp a where
   toSexp :: a -> Sexp
 
+instance toSexpVoid :: ToSexp Void where
+  toSexp = absurd
+
+instance toSexpUnit :: ToSexp Unit where
+  toSexp _ = List Nil
+
+instance toSexpBoolean :: ToSexp Boolean where
+  toSexp true = Atom "true"
+  toSexp false = Atom "false"
+
+instance toSexpInt :: ToSexp Int where
+  toSexp n = Atom (show n)
+
+instance toSexpNumber :: ToSexp Number where
+  toSexp n = Atom (show n)
+
+instance toSexpString :: ToSexp String where
+  toSexp = Atom
+
+instance toSexpArray :: (ToSexp a) => ToSexp (Array a) where
+  toSexp xs = List (List.fromFoldable (map toSexp xs))
+
 instance toSexpGenericSpine :: ToSexp GenericSpine where
   toSexp SUnit        = List (Atom "SUnit"    : Nil)
   toSexp (SArray xs)  = List (Atom "SArray"   : List.fromFoldable (map (\thk -> toSexp (thk unit)) xs))
