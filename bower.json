@@ -1,5 +1,7 @@
 {
   "name": "purescript-sexp",
+  "license": "BSD-3-Clause",
+  "ignore": ["/.pulp-cache", "/output"],
   "dependencies": {
     "purescript-lists": "^1.0.1",
     "purescript-prelude": "^1.1.0",
@@ -13,5 +15,9 @@
     "purescript-foldable-traversable": "^1.0.0",
     "purescript-console": "^1.0.0",
     "purescript-integers": "^1.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rightfold/purescript-sexp.git"
   }
 }
