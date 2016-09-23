@@ -19,7 +19,10 @@
     "purescript-integers": "^1.1.0",
     "purescript-eulalie": "^3.0.0",
     "purescript-control": "^1.0.0",
-    "purescript-quickcheck": "^1.0.0"
+    "purescript-quickcheck": "^1.0.0",
+    "purescript-proxy": "^1.0.0",
+    "purescript-console": "^1.0.0",
+    "purescript-globals": "^1.1.0"
   },
   "repository": {
     "type": "git",

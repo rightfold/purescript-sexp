@@ -11,6 +11,7 @@ module Data.Sexp
 , toString, fromString
 , class ToSexp, toSexp
 , class FromSexp, fromSexp
+, class AsSexp
 , gToSexp, gFromSexp
 ) where
 
@@ -36,6 +37,7 @@ import Data.StrMap (StrMap)
 import Data.StrMap as StrMap
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
+import Global (readFloat)
 import Prelude
 import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
 import Test.QuickCheck.Gen as Gen
@@ -80,6 +82,9 @@ fromString text =
 -- | Things that can be converted into S-expressions.
 class ToSexp a where
   toSexp :: a -> Sexp
+
+instance toSexpSexp :: ToSexp Sexp where
+  toSexp = id
 
 instance toSexpVoid :: ToSexp Void where
   toSexp = absurd
@@ -149,6 +154,9 @@ instance toSexpGenericSpine :: ToSexp GenericSpine where
 class FromSexp a where
   fromSexp :: Sexp -> Maybe a
 
+instance fromSexpSexp :: FromSexp Sexp where
+  fromSexp = Just
+
 instance fromSexpVoid :: FromSexp Void where
   fromSexp _ = Nothing
 
@@ -167,6 +175,10 @@ instance fromSexpChar :: FromSexp Char where
 
 instance fromSexpInt :: FromSexp Int where
   fromSexp (Atom x) = Int.fromString x
+  fromSexp _ = Nothing
+
+instance fromSexpNumber :: FromSexp Number where
+  fromSexp (Atom x) = Just $ readFloat x
   fromSexp _ = Nothing
 
 instance fromSexpString :: FromSexp String where
@@ -205,21 +217,42 @@ instance fromSexpGenericSpine :: FromSexp GenericSpine where
   fromSexp       (Atom "SUnit")                  = Just SUnit
   fromSexp (List (Atom "SArray"   : xs))         =
     SArray <<< List.toUnfoldable <<< map const <$> traverse fromSexp xs
-  fromSexp (List (Atom "SChar"    : c : Nil))    = SChar <$> fromSexp c
-  fromSexp (List (Atom "SString"  : s : Nil))    = fromSexp s
-  fromSexp (List (Atom "SInt"     : i : Nil))    = fromSexp i
-  fromSexp (List (Atom "SBoolean" : b : Nil))    = fromSexp b
-  fromSexp (List (Atom "SNumber"  : n : Nil))    = fromSexp n
+  fromSexp (List (Atom "SChar"    : c : Nil))    = SChar    <$> fromSexp c
+  fromSexp (List (Atom "SString"  : s : Nil))    = SString  <$> fromSexp s
+  fromSexp (List (Atom "SInt"     : i : Nil))    = SInt     <$> fromSexp i
+  fromSexp (List (Atom "SBoolean" : b : Nil))    = SBoolean <$> fromSexp b
+  fromSexp (List (Atom "SNumber"  : n : Nil))    = SNumber  <$> fromSexp n
   fromSexp (List (Atom "SRecord"  : r))          =
-    let go acc Nil = Just acc
+    let go acc Nil = Just (List.reverse acc)
         go acc (Atom k : v : tail) = do
           v' <- fromSexp v
-          go ({recLabel: k, recValue: \_ -> v'} : acc) tail
+          go ({recLabel: k, recValue: const v'} : acc) tail
         go acc _ = Nothing
     in SRecord <<< List.toUnfoldable <$> go Nil r
   fromSexp (List (Atom "SProd"    : Atom c : r)) =
     SProd c <<< List.toUnfoldable <<< map const <$> traverse fromSexp r
   fromSexp _ = Nothing
+
+-- | Instances must satisfy the following law:
+-- |
+-- | - Losslessness: `fromSexp (toSexp x) = Just x`
+class (ToSexp a, FromSexp a) <= AsSexp a
+
+instance asSexpSexp :: AsSexp Sexp
+instance asSexpVoid :: AsSexp Void
+instance asSexpUnit :: AsSexp Unit
+instance asSexpBoolean :: AsSexp Boolean
+instance asSexpChar :: AsSexp Char
+instance asSexpInt :: AsSexp Int
+instance asSexpNumber :: AsSexp Number
+instance asSexpString :: AsSexp String
+instance asSexpArray :: (AsSexp a) => AsSexp (Array a)
+instance asSexpOrdering :: AsSexp Ordering
+instance asSexpList :: (AsSexp a) => AsSexp (List a)
+instance asSexpMaybe :: (AsSexp a) => AsSexp (Maybe a)
+instance asSexpTuple :: (AsSexp a, AsSexp b) => AsSexp (Tuple a b)
+instance asSexpEither :: (AsSexp a, AsSexp b) => AsSexp (Either a b)
+instance asSexpGenericSpine :: AsSexp GenericSpine
 
 -- | Convert anything to an S-expression.
 gToSexp :: forall a. (Generic a) => a -> Sexp

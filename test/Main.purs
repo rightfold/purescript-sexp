@@ -2,10 +2,56 @@ module Test.Main
 ( main
 ) where
 
+import Control.Monad.Eff.Console (log)
+import Data.Either (Either)
+import Data.Generic (class Generic)
+import Data.List (List)
 import Data.Maybe (Maybe(..))
-import Data.Sexp (fromString, toString)
+import Data.Sexp
+import Data.Tuple (Tuple)
 import Prelude
 import Test.QuickCheck (quickCheck')
+import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
+import Test.QuickCheck.Gen as Gen
+import Test.QuickCheck.Laws.Data.Sexp (checkAsSexp)
+import Type.Proxy (Proxy(..))
+
+data GenericTest
+  = A
+  | B String
+  | C {x :: Int, y :: Number}
+  | D GenericTest
+
+derive instance eqGenericTest :: Eq GenericTest
+derive instance genericGenericTest :: Generic GenericTest
+instance toSexpGenericTest :: ToSexp GenericTest where toSexp = gToSexp
+instance fromSexpGenericTest :: FromSexp GenericTest where fromSexp = gFromSexp
+instance asSexpGenericTest :: AsSexp GenericTest
+
+instance arbitraryGenericTest :: Arbitrary GenericTest where
+  arbitrary = Gen.sized arbitrary'
+    where
+    arbitrary' 0 = pure A
+    arbitrary' 1 = B <$> arbitrary
+    arbitrary' n
+      | n `mod` 2 == 0 = (\x y -> C {x, y}) <$> arbitrary <*> arbitrary
+      | otherwise      = D <$> arbitrary' (n / 2)
 
 main = do
+  checkAsSexp (Proxy :: Proxy Sexp)
+  checkAsSexp (Proxy :: Proxy Unit)
+  checkAsSexp (Proxy :: Proxy Boolean)
+  checkAsSexp (Proxy :: Proxy Char)
+  checkAsSexp (Proxy :: Proxy Int)
+  checkAsSexp (Proxy :: Proxy Number)
+  checkAsSexp (Proxy :: Proxy String)
+  checkAsSexp (Proxy :: Proxy (Array Sexp))
+  checkAsSexp (Proxy :: Proxy Ordering)
+  checkAsSexp (Proxy :: Proxy (List Sexp))
+  checkAsSexp (Proxy :: Proxy (Maybe Sexp))
+  checkAsSexp (Proxy :: Proxy (Tuple Int Sexp))
+  checkAsSexp (Proxy :: Proxy (Either Int Sexp))
+  checkAsSexp (Proxy :: Proxy GenericTest)
+
+  log "Checking toString and fromString"
   quickCheck' 1000 \sexp -> Just sexp == fromString (toString sexp)
