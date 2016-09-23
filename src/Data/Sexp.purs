@@ -5,9 +5,11 @@ module Data.Sexp
 , gToSexp
 ) where
 
+import Data.Either (Either(..))
 import Data.Generic (class Generic, GenericSpine(..), toSpine)
 import Data.List ((:), List(..))
 import Data.List as List
+import Data.Maybe (Maybe(..))
 import Data.String as String
 import Prelude
 
@@ -42,6 +44,17 @@ instance toSexpString :: ToSexp String where
 
 instance toSexpArray :: (ToSexp a) => ToSexp (Array a) where
   toSexp xs = List (List.fromFoldable (map toSexp xs))
+
+instance toSexpList :: (ToSexp a) => ToSexp (List a) where
+  toSexp xs = List (map toSexp xs)
+
+instance toSexpMaybe :: (ToSexp a) => ToSexp (Maybe a) where
+  toSexp (Just x) = List (Atom "Just"    : toSexp x : Nil)
+  toSexp Nothing  = List (Atom "Nothing" : Nil)
+
+instance toSexpEither :: (ToSexp a, ToSexp b) => ToSexp (Either a b) where
+  toSexp (Left x)  = List (Atom "Left"  : toSexp x : Nil)
+  toSexp (Right x) = List (Atom "Right" : toSexp x : Nil)
 
 instance toSexpGenericSpine :: ToSexp GenericSpine where
   toSexp SUnit        = List (Atom "SUnit"    : Nil)
