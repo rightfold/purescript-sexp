@@ -10,6 +10,7 @@ module Data.Sexp
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Generic (class Generic, GenericSpine(..), toSpine)
+import Data.Int as Int
 import Data.List ((:), List(..))
 import Data.List as List
 import Data.Map (Map)
@@ -20,6 +21,7 @@ import Data.Set as Set
 import Data.String as String
 import Data.StrMap (StrMap)
 import Data.StrMap as StrMap
+import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Prelude
 
@@ -112,6 +114,42 @@ instance fromSexpUnit :: FromSexp Unit where
 instance fromSexpBoolean :: FromSexp Boolean where
   fromSexp (Atom "true")  = Just true
   fromSexp (Atom "false") = Just false
+  fromSexp _ = Nothing
+
+instance fromSexpInt :: FromSexp Int where
+  fromSexp (Atom x) = Int.fromString x
+  fromSexp _ = Nothing
+
+instance fromSexpString :: FromSexp String where
+  fromSexp (Atom x) = Just x
+  fromSexp _ = Nothing
+
+instance fromSexpArray :: (FromSexp a) => FromSexp (Array a) where
+  fromSexp (List xs) = traverse fromSexp (List.toUnfoldable xs)
+  fromSexp _ = Nothing
+
+instance fromSexpOrdering :: FromSexp Ordering where
+  fromSexp (Atom "EQ") = Just EQ
+  fromSexp (Atom "LT") = Just LT
+  fromSexp (Atom "GT") = Just GT
+  fromSexp _ = Nothing
+
+instance fromSexpList :: (FromSexp a) => FromSexp (List a) where
+  fromSexp (List xs) = traverse fromSexp xs
+  fromSexp _ = Nothing
+
+instance fromSexpMaybe :: (FromSexp a) => FromSexp (Maybe a) where
+  fromSexp (List (Atom "Just" : x : Nil)) = Just <$> fromSexp x
+  fromSexp (Atom "Nothing") = Just Nothing
+  fromSexp _ = Nothing
+
+instance fromSexpTuple :: (FromSexp a, FromSexp b) => FromSexp (Tuple a b) where
+  fromSexp (List (a : b : Nil)) = Tuple <$> fromSexp a <*> fromSexp b
+  fromSexp _ = Nothing
+
+instance fromSexpEither :: (FromSexp a, FromSexp b) => FromSexp (Either a b) where
+  fromSexp (List (Atom "Left"  : x : Nil)) = Left  <$> fromSexp x
+  fromSexp (List (Atom "Right" : x : Nil)) = Right <$> fromSexp x
   fromSexp _ = Nothing
 
 -- | Convert anything to an S-expression.
