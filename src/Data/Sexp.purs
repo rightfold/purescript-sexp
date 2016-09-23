@@ -1,11 +1,13 @@
 -- | S-expressions.
 module Data.Sexp
 ( Sexp
+, toString
 , class ToSexp, toSexp
 , gToSexp
 ) where
 
 import Data.Either (Either(..))
+import Data.Foldable (foldMap)
 import Data.Generic (class Generic, GenericSpine(..), toSpine)
 import Data.List ((:), List(..))
 import Data.List as List
@@ -26,6 +28,11 @@ data Sexp = Atom String | List (List Sexp)
 derive instance eqSexp :: Eq Sexp
 derive instance ordSexp :: Ord Sexp
 derive instance genericSexp :: Generic Sexp
+
+toString :: Sexp -> String
+toString (Atom s)  = show s
+toString (List Nil) = "()"
+toString (List (x : xs)) = "(" <> toString x <> foldMap (\e -> " " <> toString e) xs <> ")"
 
 class ToSexp a where
   toSexp :: a -> Sexp
