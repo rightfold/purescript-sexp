@@ -52,6 +52,11 @@ instance toSexpString :: ToSexp String where
 instance toSexpArray :: (ToSexp a) => ToSexp (Array a) where
   toSexp xs = List (List.fromFoldable (map toSexp xs))
 
+instance toSexpOrdering :: ToSexp Ordering where
+  toSexp EQ = Atom "EQ"
+  toSexp LT = Atom "LT"
+  toSexp GT = Atom "GT"
+
 instance toSexpList :: (ToSexp a) => ToSexp (List a) where
   toSexp xs = List (map toSexp xs)
 
