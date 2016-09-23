@@ -2,6 +2,8 @@
   "name": "purescript-sexp",
   "dependencies": {
     "purescript-lists": "^1.0.1",
-    "purescript-prelude": "^1.1.0"
+    "purescript-prelude": "^1.1.0",
+    "purescript-generics": "^1.0.1",
+    "purescript-strings": "^1.1.0"
   }
 }
