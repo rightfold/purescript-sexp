@@ -1,6 +1,6 @@
 -- | S-expressions.
 module Data.Sexp
-( Sexp
+( Sexp(..)
 , toString
 , class ToSexp, toSexp
 , class FromSexp, fromSexp
