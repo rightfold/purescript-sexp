@@ -10,6 +10,7 @@
     "purescript-maps": "^1.2.0",
     "purescript-sets": "^1.0.0",
     "purescript-tuples": "^1.0.0",
-    "purescript-foldable-traversable": "^1.0.0"
+    "purescript-foldable-traversable": "^1.0.0",
+    "purescript-console": "^1.0.0"
   }
 }

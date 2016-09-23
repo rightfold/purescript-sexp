@@ -69,7 +69,7 @@ instance toSexpList :: (ToSexp a) => ToSexp (List a) where
 
 instance toSexpMaybe :: (ToSexp a) => ToSexp (Maybe a) where
   toSexp (Just x) = List (Atom "Just"    : toSexp x : Nil)
-  toSexp Nothing  = List (Atom "Nothing" : Nil)
+  toSexp Nothing  = Atom "Nothing"
 
 instance toSexpTuple :: (ToSexp a, ToSexp b) => ToSexp (Tuple a b) where
   toSexp (Tuple a b) = List (toSexp a : toSexp b : Nil)
