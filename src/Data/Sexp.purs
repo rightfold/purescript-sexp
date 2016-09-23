@@ -37,6 +37,7 @@ toString (Atom s)  = show s
 toString (List Nil) = "()"
 toString (List (x : xs)) = "(" <> toString x <> foldMap (\e -> " " <> toString e) xs <> ")"
 
+-- | Things that can be converted into S-expressions.
 class ToSexp a where
   toSexp :: a -> Sexp
 
@@ -101,6 +102,7 @@ instance toSexpGenericSpine :: ToSexp GenericSpine where
   toSexp (SRecord r)  = List (Atom "SRecord"  : List.fromFoldable (r >>= \{recLabel, recValue} -> [Atom recLabel, toSexp (recValue unit)]))
   toSexp (SProd c xs) = List (Atom "SProd"    : Atom c : List.fromFoldable (map (\thk -> toSexp (thk unit)) xs))
 
+-- | Things that S-expressions can be converted into.
 class FromSexp a where
   fromSexp :: Sexp -> Maybe a
 
