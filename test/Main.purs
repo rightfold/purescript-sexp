@@ -70,10 +70,10 @@ main = do
 
 genJSON :: Int -> AC.Json
 genJSON 0 = AC.fromString "hello world"
-genJSON n = AC.fromArray $ List.toUnfoldable $ go (n - 1)
+genJSON n = AC.fromArray $ go (n - 1)
   where
-  go 0 = Nil
-  go n = genJSON (n / 2) : go (n / 2)
+  go 0 = []
+  go n = [genJSON (n / 2)] <> go (n / 2)
 
 genSexp :: Int -> Sexp
 genSexp 0 = Atom "hello world"
