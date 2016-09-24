@@ -48,7 +48,7 @@ instance arbitrarySexp :: Arbitrary Sexp where
   arbitrary = Gen.sized arbitrary'
     where
     arbitrary' 0 = Atom <$> arbitrary
-    arbitrary' n = List <$> Gen.listOf (n / 2) (arbitrary' (n / 2))
+    arbitrary' n = List <$> Gen.listOf (n / 2 + 1) (arbitrary' (n / 2))
 
 -- | Compute the textual representation of an S-expression.
 toString :: Sexp -> String
