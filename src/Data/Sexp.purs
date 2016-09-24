@@ -60,25 +60,26 @@ foreign import _escape :: String -> String
 
 -- | Parse the textual representation of an S-expression.
 fromString :: String -> Maybe Sexp
-fromString = String.toCharArray >>> List.fromFoldable >>> go >>> _.result
-  where
-  go (' '  : cs) = go cs
-  go ('\t' : cs) = go cs
-  go ('\r' : cs) = go cs
-  go ('\n' : cs) = go cs
-  go ('('  : cs) = list Nil cs
-  go ('"'  : cs) = string "" cs
-  go cs = {result: Nothing, rest: cs}
+fromString = _fromString { nothing: Nothing
+                         , just:    Just
+                         , nil:     Nil
+                         , cons:    Cons
+                         , reverse: List.reverse
+                         , atom:    Atom
+                         , list:    List
+                         }
 
-  list acc (')' : rest) = {result: Just (List (List.reverse acc)), rest}
-  list acc cs' = case go cs' of
-    {result: Just result, rest} -> list (result : acc) rest
-    other -> other
-
-  string acc ('"' : rest) = {result: Just (Atom acc), rest}
-  string acc ('\\' : c : rest) = string (acc <> String.singleton c) rest
-  string acc (c : rest) = string (acc <> String.singleton c) rest
-  string _   rest = {result: Nothing, rest}
+foreign import _fromString
+  :: { nothing :: forall a. Maybe a
+     , just    :: forall a. a -> Maybe a
+     , nil     :: forall a. List a
+     , cons    :: forall a. a -> List a -> List a
+     , reverse :: forall a. List a -> List a
+     , atom    :: String -> Sexp
+     , list    :: List Sexp -> Sexp
+     }
+  -> String
+  -> Maybe Sexp
 
 -- | Things that can be converted into S-expressions.
 class ToSexp a where
