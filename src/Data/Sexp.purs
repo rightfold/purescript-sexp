@@ -6,6 +6,7 @@
 -- | - Only backslashes and double quotes can be escaped inside atoms; anything
 -- |   else must appear verbatim. Newlines and any other character are allowed
 -- |   inside atoms.
+-- | - Text following the first S-expression is ignored.
 module Data.Sexp
 ( Sexp(..)
 , toString, fromString
