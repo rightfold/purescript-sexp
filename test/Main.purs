@@ -62,8 +62,8 @@ main = do
   quickCheck' 1000 \sexp -> Just sexp == fromString (toString sexp)
 
   log "Benchmarking against JSON"
-  benchJSON <- benchmark' 10 100 \i -> pure $ AP.jsonParser (AC.stringify (genJSON i))
-  benchSexp <- benchmark' 10 100 \i -> pure $ fromString (toString (genSexp i))
+  benchJSON <- benchmark' 10 1000 \i -> pure $ AP.jsonParser (AC.stringify (genJSON i))
+  benchSexp <- benchmark' 10 1000 \i -> pure $ fromString (toString (genSexp i))
   log $ gnuplot [ {title: "JSON", benchmark: benchJSON}
                 , {title: "Sexp", benchmark: benchSexp}
                 ]
