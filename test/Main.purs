@@ -2,10 +2,14 @@ module Test.Main
 ( main
 ) where
 
+import Benchmark (benchmark')
+import Benchmark.Plot.Gnuplot (gnuplot)
 import Control.Monad.Eff.Console (log)
+import Data.Argonaut.Core as AC
+import Data.Argonaut.Parser as AP
 import Data.Either (Either)
 import Data.Generic (class Generic)
-import Data.List (List)
+import Data.List ((:), List(..))
 import Data.Maybe (Maybe(..))
 import Data.Sexp
 import Data.Tuple (Tuple)
@@ -55,3 +59,24 @@ main = do
 
   log "Checking toString and fromString"
   quickCheck' 1000 \sexp -> Just sexp == fromString (toString sexp)
+
+  log "Benchmarking against JSON"
+  benchJSON <- benchmark' 10 50 \i -> pure $ AP.jsonParser (AC.stringify (genJSON i))
+  benchSexp <- benchmark' 10 50 \i -> pure $ fromString (toString (genSexp i))
+  log $ gnuplot [ {title: "JSON", benchmark: benchJSON}
+                , {title: "Sexp", benchmark: benchSexp}
+                ]
+
+genJSON :: Int -> AC.Json
+genJSON 0 = AC.fromString "hello world"
+genJSON n = AC.fromArray $ go (n - 1)
+  where
+  go 0 = []
+  go n = [genJSON (n / 2)] <> go (n - 1)
+
+genSexp :: Int -> Sexp
+genSexp 0 = Atom "hello world"
+genSexp n = List $ go (n - 1)
+  where
+  go 0 = Nil
+  go n = genSexp (n / 2) : go (n - 1)
