@@ -15,13 +15,7 @@ module Data.Sexp
 , gToSexp, gFromSexp
 ) where
 
-import Control.Alt ((<|>))
 import Data.Either (Either(..))
-import Data.Eulalie.Char as EC
-import Data.Eulalie.Parser as EP
-import Data.Eulalie.Result as ER
-import Data.Eulalie.Stream as ES
-import Data.Eulalie.String as ES
 import Data.Foldable (foldMap)
 import Data.Generic (fromSpine, class Generic, GenericSpine(..), toSpine)
 import Data.Int as Int
@@ -65,19 +59,25 @@ foreign import _escape :: String -> String
 
 -- | Parse the textual representation of an S-expression.
 fromString :: String -> Maybe Sexp
-fromString text =
-  case EP.parse (parser unit <* EP.eof) (ES.stream (String.toCharArray text)) of
-    ER.Error _ -> Nothing
-    ER.Success {value} -> Just value
+fromString = String.toCharArray >>> List.fromFoldable >>> go >>> _.result
   where
-  parser _ = EP.many space *> (atom <|> list) <* EP.many space
-  space = EC.oneOf " \t\r\n"
-  atom = Atom <$> ES.quotedString
-  list = do
-    EC.char '('
-    xs <- EP.many (parser unit)
-    EC.char ')'
-    pure $ List xs
+  go (' '  : cs) = go cs
+  go ('\t' : cs) = go cs
+  go ('\r' : cs) = go cs
+  go ('\n' : cs) = go cs
+  go ('('  : cs) = list Nil cs
+  go ('"'  : cs) = string "" cs
+  go cs = {result: Nothing, rest: cs}
+
+  list acc (')' : rest) = {result: Just (List (List.reverse acc)), rest}
+  list acc cs' = case go cs' of
+    {result: Just result, rest} -> list (result : acc) rest
+    other -> other
+
+  string acc ('"' : rest) = {result: Just (Atom acc), rest}
+  string acc ('\\' : c : rest) = string (acc <> String.singleton c) rest
+  string acc (c : rest) = string (acc <> String.singleton c) rest
+  string _   rest = {result: Nothing, rest}
 
 -- | Things that can be converted into S-expressions.
 class ToSexp a where
