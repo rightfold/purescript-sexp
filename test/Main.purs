@@ -79,4 +79,4 @@ genSexp 0 = Atom "hello world"
 genSexp n = List $ go (n - 1)
   where
   go 0 = Nil
-  go n = genSexp (n / 2) : go (n - 1)
+  go n = genSexp (n / 2) : go (n / 2)
