@@ -10,6 +10,7 @@ import Data.Argonaut.Parser as AP
 import Data.Either (Either)
 import Data.Generic (class Generic)
 import Data.List ((:), List(..))
+import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Sexp
 import Data.Tuple (Tuple)
@@ -61,18 +62,18 @@ main = do
   quickCheck' 1000 \sexp -> Just sexp == fromString (toString sexp)
 
   log "Benchmarking against JSON"
-  benchJSON <- benchmark' 10 50 \i -> pure $ AP.jsonParser (AC.stringify (genJSON i))
-  benchSexp <- benchmark' 10 50 \i -> pure $ fromString (toString (genSexp i))
+  benchJSON <- benchmark' 10 100 \i -> pure $ AP.jsonParser (AC.stringify (genJSON i))
+  benchSexp <- benchmark' 10 100 \i -> pure $ fromString (toString (genSexp i))
   log $ gnuplot [ {title: "JSON", benchmark: benchJSON}
                 , {title: "Sexp", benchmark: benchSexp}
                 ]
 
 genJSON :: Int -> AC.Json
 genJSON 0 = AC.fromString "hello world"
-genJSON n = AC.fromArray $ go (n - 1)
+genJSON n = AC.fromArray $ List.toUnfoldable $ go (n - 1)
   where
-  go 0 = []
-  go n = [genJSON (n / 2)] <> go (n - 1)
+  go 0 = Nil
+  go n = genJSON (n / 2) : go (n / 2)
 
 genSexp :: Int -> Sexp
 genSexp 0 = Atom "hello world"
