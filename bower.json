@@ -27,7 +27,7 @@
     "url": "git://github.com/rightfold/purescript-sexp.git"
   },
   "devDependencies": {
-    "purescript-bench": "^0.0.1",
+    "purescript-bench": "^0.0.3",
     "purescript-argonaut": "^1.0.0"
   }
 }

@@ -2,7 +2,7 @@ module Test.Main
 ( main
 ) where
 
-import Benchmark (benchmark')
+import Benchmark (benchmark)
 import Benchmark.Plot.Gnuplot (gnuplot)
 import Control.Monad.Eff.Console (log)
 import Data.Argonaut.Core as AC
@@ -62,8 +62,8 @@ main = do
   quickCheck' 1000 \sexp -> Just sexp == fromString (toString sexp)
 
   log "Benchmarking against JSON"
-  benchJSON <- benchmark' 10 1000 \i -> pure $ AP.jsonParser (AC.stringify (genJSON i))
-  benchSexp <- benchmark' 10 1000 \i -> pure $ fromString (toString (genSexp i))
+  benchJSON <- benchmark (pure <<< genJSON) \j -> pure $ AP.jsonParser (AC.stringify j)
+  benchSexp <- benchmark (pure <<< genSexp) \s -> pure $ fromString (toString s)
   log $ gnuplot [ {title: "JSON", benchmark: benchJSON}
                 , {title: "Sexp", benchmark: benchSexp}
                 ]
