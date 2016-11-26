@@ -6,28 +6,28 @@
     "/output"
   ],
   "dependencies": {
-    "purescript-lists": "^1.0.1",
-    "purescript-prelude": "^1.1.0",
-    "purescript-generics": "^1.0.1",
-    "purescript-strings": "^1.1.0",
-    "purescript-maybe": "^1.0.0",
-    "purescript-either": "^1.0.0",
-    "purescript-maps": "^1.2.0",
-    "purescript-sets": "^1.0.0",
-    "purescript-tuples": "^1.0.0",
-    "purescript-foldable-traversable": "^1.0.0",
-    "purescript-integers": "^1.1.0",
-    "purescript-quickcheck": "^1.0.0",
+    "purescript-lists": "^3.2.1",
+    "purescript-prelude": "^2.1.0",
+    "purescript-generics": "^3.1.0",
+    "purescript-strings": "^2.0.2",
+    "purescript-maybe": "^2.0.1",
+    "purescript-either": "^2.0.0",
+    "purescript-maps": "^2.0.1",
+    "purescript-sets": "^2.0.0",
+    "purescript-tuples": "^3.0.0",
+    "purescript-foldable-traversable": "^2.0.0",
+    "purescript-integers": "^2.1.0",
+    "purescript-quickcheck": "^3.1.1",
     "purescript-proxy": "^1.0.0",
-    "purescript-console": "^1.0.0",
-    "purescript-globals": "^1.1.0"
+    "purescript-console": "^2.0.0",
+    "purescript-globals": "^2.0.0"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/rightfold/purescript-sexp.git"
   },
   "devDependencies": {
-    "purescript-bench": "^0.0.3",
-    "purescript-argonaut": "^1.0.0"
+    "purescript-bench": "^1.0.0",
+    "purescript-argonaut": "^2.0.0"
   }
 }
