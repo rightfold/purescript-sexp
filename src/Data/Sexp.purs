@@ -14,7 +14,12 @@ module Data.Sexp
 , class FromSexp, fromSexp
 , class AsSexp
 , gToSexp, gFromSexp
-, class GenericToSexp, genericToSexp', class GenericFromSexp, genericFromSexp'
+, class GenericToSexp, genericToSexp'
+, class GenericToSexpArgs, genericToSexpArgs'
+, class GenericToSexpFields, genericToSexpFields'
+, class GenericFromSexp, genericFromSexp'
+, class GenericFromSexpArgs, genericFromSexpArgs'
+, class GenericFromSexpFields, genericFromSexpFields'
 , genericToSexp, genericFromSexp
 ) where
 

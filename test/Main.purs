@@ -30,6 +30,7 @@ data GenericTest
 
 derive instance eqGenericTest :: Eq GenericTest
 derive instance genericGenericTest :: Generic GenericTest
+-- derive instance genericRepGenericTest :: Rep.Generic GenericTest _
 instance toSexpGenericTest :: ToSexp GenericTest where toSexp = gToSexp
 instance fromSexpGenericTest :: FromSexp GenericTest where fromSexp = gFromSexp
 instance asSexpGenericTest :: AsSexp GenericTest
@@ -46,10 +47,11 @@ instance arbitraryGenericTest :: Arbitrary GenericTest where
 newtype GenericRepTest = GenericRepTest GenericTest
 
 derive newtype instance eqGenericRepTest :: Eq GenericRepTest
-instance genericRepGenericRepTest :: Rep.Generic GenericRepTest _
+derive instance genericRepGenericRepTest :: Rep.Generic GenericRepTest _
 instance toSexpGenericRepTest :: ToSexp GenericRepTest where toSexp = genericToSexp
 instance fromSexpGenericRepTest :: FromSexp GenericRepTest where fromSexp = genericFromSexp
 instance asSexpGenericRepTest :: AsSexp GenericRepTest
+derive newtype instance arbitraryGenericRepTest :: Arbitrary GenericRepTest
 
 main = do
   checkAsSexp (Proxy :: Proxy Sexp)
