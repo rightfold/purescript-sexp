@@ -14,11 +14,15 @@ module Data.Sexp
 , class FromSexp, fromSexp
 , class AsSexp
 , gToSexp, gFromSexp
+, class GenericToSexp, genericToSexp', class GenericFromSexp, genericFromSexp'
+, genericToSexp, genericFromSexp
 ) where
 
+import Control.Alt ((<|>))
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Generic (fromSpine, class Generic, GenericSpine(..), toSpine)
+import Data.Generic.Rep as Rep
 import Data.Int as Int
 import Data.List ((:), List(..))
 import Data.List as List
@@ -30,9 +34,11 @@ import Data.Set as Set
 import Data.String as String
 import Data.StrMap (StrMap)
 import Data.StrMap as StrMap
+import Data.Symbol (class IsSymbol, reflectSymbol, SProxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Global (readFloat)
+import Partial.Unsafe (unsafeCrashWith)
 import Prelude
 import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
 import Test.QuickCheck.Gen as Gen
@@ -43,6 +49,7 @@ data Sexp = Atom String | List (List Sexp)
 derive instance eqSexp :: Eq Sexp
 derive instance ordSexp :: Ord Sexp
 derive instance genericSexp :: Generic Sexp
+derive instance genericRepSexp :: Rep.Generic Sexp _
 
 instance arbitrarySexp :: Arbitrary Sexp where
   arbitrary = Gen.sized arbitrary'
@@ -263,3 +270,96 @@ gToSexp = toSpine >>> toSexp
 -- | Convert an S-expression to anything.
 gFromSexp :: forall a. (Generic a) => Sexp -> Maybe a
 gFromSexp = fromSexp >=> fromSpine
+
+class GenericToSexp a where
+  genericToSexp' :: a -> Sexp
+
+instance genericToSexpNoConstructors :: GenericToSexp Rep.NoConstructors where
+  genericToSexp' _ = unsafeCrashWith "genericToSexp'"
+
+instance genericToSexpSum :: (GenericToSexp a, GenericToSexp b) => GenericToSexp (Rep.Sum a b) where
+  genericToSexp' (Rep.Inl a) = genericToSexp' a
+  genericToSexp' (Rep.Inr b) = genericToSexp' b
+
+instance genericToSexpConstructor :: (IsSymbol n, GenericToSexpArgs a) => GenericToSexp (Rep.Constructor n a) where
+  genericToSexp' (Rep.Constructor a) =
+    List (Atom (reflectSymbol (SProxy :: SProxy n)) : genericToSexpArgs' a)
+
+class GenericToSexpArgs a where
+  genericToSexpArgs' :: a -> List Sexp
+
+instance genericToSexpArgsNoArguments :: GenericToSexpArgs Rep.NoArguments where
+  genericToSexpArgs' = const Nil
+
+instance genericToSexpArgsProduct :: (GenericToSexpArgs a, GenericToSexpArgs b) => GenericToSexpArgs (Rep.Product a b) where
+  genericToSexpArgs' (Rep.Product a b) = genericToSexpArgs' a <> genericToSexpArgs' b
+
+instance genericToSexpArgsArgument :: (ToSexp a) => GenericToSexpArgs (Rep.Argument a) where
+  genericToSexpArgs' (Rep.Argument a) = toSexp a : Nil
+
+instance genericToSexpArgsRec :: (GenericToSexpFields a) => GenericToSexpArgs (Rep.Rec a) where
+  genericToSexpArgs' (Rep.Rec a) = List (genericToSexpFields' a) : Nil
+
+class GenericToSexpFields a where
+  genericToSexpFields' :: a -> List Sexp
+
+instance genericToSexpFieldsProduct :: (GenericToSexpFields a, GenericToSexpFields b) => GenericToSexpFields (Rep.Product a b) where
+  genericToSexpFields' (Rep.Product a b) = genericToSexpFields' a <> genericToSexpFields' b
+
+instance genericToSexpFieldsField :: (IsSymbol n, ToSexp a) => GenericToSexpFields (Rep.Field n a) where
+  genericToSexpFields' (Rep.Field a) = Atom (reflectSymbol (SProxy :: SProxy n)) : toSexp a : Nil
+
+class GenericFromSexp a where
+  genericFromSexp' :: Sexp -> Maybe a
+
+instance genericFromSexpNoConstructors :: GenericFromSexp Rep.NoConstructors where
+  genericFromSexp' = const Nothing
+
+instance genericFromSexpSum :: (GenericFromSexp a, GenericFromSexp b) => GenericFromSexp (Rep.Sum a b) where
+  genericFromSexp' s = (Rep.Inl <$> genericFromSexp' s) <|> (Rep.Inr <$> genericFromSexp' s)
+
+instance genericFromSexpConstructor :: (IsSymbol n, GenericFromSexpArgs a) => GenericFromSexp (Rep.Constructor n a) where
+  genericFromSexp' (List (Atom n : a)) | n == reflectSymbol (SProxy :: SProxy n) =
+    Rep.Constructor <$> genericFromSexpArgs' a
+  genericFromSexp' _ = Nothing
+
+class GenericFromSexpArgs a where
+  genericFromSexpArgs' :: List Sexp -> Maybe a
+
+instance genericFromSexpArgsNoArguments :: GenericFromSexpArgs Rep.NoArguments where
+  genericFromSexpArgs' Nil = Just Rep.NoArguments
+  genericFromSexpArgs' _ = Nothing
+
+instance genericFromSexpArgsProduct :: (GenericFromSexpArgs a, GenericFromSexpArgs b) => GenericFromSexpArgs (Rep.Product a b) where
+  genericFromSexpArgs' (a : b) =
+    Rep.Product <$> genericFromSexpArgs' (a : Nil) <*> genericFromSexpArgs' b
+  genericFromSexpArgs' Nil = Nothing
+
+instance genericFromSexpArgsArgument :: (FromSexp a) => GenericFromSexpArgs (Rep.Argument a) where
+  genericFromSexpArgs' (a : Nil) = Rep.Argument <$> fromSexp a
+  genericFromSexpArgs' _ = Nothing
+
+instance genericFromSexpArgsRec :: (GenericFromSexpFields a) => GenericFromSexpArgs (Rep.Rec a) where
+  genericFromSexpArgs' (List a : Nil) = Rep.Rec <$> genericFromSexpFields' a
+  genericFromSexpArgs' _ = Nothing
+
+class GenericFromSexpFields a where
+  genericFromSexpFields' :: List Sexp -> Maybe a
+
+instance genericFromSexpFieldsProduct :: (GenericFromSexpFields a, GenericFromSexpFields b) => GenericFromSexpFields (Rep.Product a b) where
+  genericFromSexpFields' (a : b) =
+    Rep.Product <$> genericFromSexpFields' (a : Nil) <*> genericFromSexpFields' b
+  genericFromSexpFields' Nil = Nothing
+
+instance genericFromSexpFieldsField :: (IsSymbol n, FromSexp a) => GenericFromSexpFields (Rep.Field n a) where
+  genericFromSexpFields' (Atom n : a : Nil) | n == reflectSymbol (SProxy :: SProxy n) =
+    Rep.Field <$> fromSexp a
+  genericFromSexpFields' _ = Nothing
+
+-- | Convert anything to an S-expression.
+genericToSexp :: forall a r. (Rep.Generic a r, GenericToSexp r) => a -> Sexp
+genericToSexp = Rep.from >>> genericToSexp'
+
+-- | Convert an S-expression to anything.
+genericFromSexp :: forall a r. (Rep.Generic a r, GenericFromSexp r) => Sexp -> Maybe a
+genericFromSexp = genericFromSexp' >>> map Rep.to

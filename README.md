@@ -6,6 +6,7 @@ compact textual encoding consisting of strings (called atoms) and lists of
 S-expressions.
 
 purescript-sexp supports deriving serialization and deserialization functions
-using [purescript-generics][psg].
+using [purescript-generics][psg] and [purescript-generics-rep][psgr].
 
 [psg]: https://pursuit.purescript.org/packages/purescript-generics
+[psgr]: https://pursuit.purescript.org/packages/purescript-generics-rep

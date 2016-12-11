@@ -9,6 +9,7 @@ import Data.Argonaut.Core as AC
 import Data.Argonaut.Parser as AP
 import Data.Either (Either)
 import Data.Generic (class Generic)
+import Data.Generic.Rep as Rep
 import Data.List ((:), List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
@@ -42,6 +43,14 @@ instance arbitraryGenericTest :: Arbitrary GenericTest where
       | n `mod` 2 == 0 = (\x y -> C {x, y}) <$> arbitrary <*> arbitrary
       | otherwise      = D <$> arbitrary' (n / 2)
 
+newtype GenericRepTest = GenericRepTest GenericTest
+
+derive newtype instance eqGenericRepTest :: Eq GenericRepTest
+instance genericRepGenericRepTest :: Rep.Generic GenericRepTest _
+instance toSexpGenericRepTest :: ToSexp GenericRepTest where toSexp = genericToSexp
+instance fromSexpGenericRepTest :: FromSexp GenericRepTest where fromSexp = genericFromSexp
+instance asSexpGenericRepTest :: AsSexp GenericRepTest
+
 main = do
   checkAsSexp (Proxy :: Proxy Sexp)
   checkAsSexp (Proxy :: Proxy Unit)
@@ -57,6 +66,7 @@ main = do
   checkAsSexp (Proxy :: Proxy (Tuple Int Sexp))
   checkAsSexp (Proxy :: Proxy (Either Int Sexp))
   checkAsSexp (Proxy :: Proxy GenericTest)
+  checkAsSexp (Proxy :: Proxy GenericRepTest)
 
   log "Checking toString and fromString"
   quickCheck' 1000 \sexp -> Just sexp == fromString (toString sexp)
